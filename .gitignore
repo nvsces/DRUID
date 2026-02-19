@@ -1,0 +1,20 @@
+# Dart/Pub
+.dart_tool/
+.packages
+pubspec.lock
+build/
+.pub/
+
+# Web build output
+web/packages/
+web/*.dart.js
+web/*.dart.js.map
+web/*.dart.js.deps
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store

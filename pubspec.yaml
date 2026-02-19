@@ -1,0 +1,15 @@
+name: druid
+description: Dart web UI framework with Virtual DOM and Signals
+version: 0.1.0
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  web: ^1.1.0
+
+dev_dependencies:
+  build_runner: ^2.4.0
+  build_web_compilers: ^4.4.1
+  webdev: ^3.8.0
+  test: ^1.25.0
