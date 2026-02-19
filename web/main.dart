@@ -1,4 +1,58 @@
+import 'dart:js_interop';
+import 'dart:convert';
+import 'package:web/web.dart' as web;
 import 'package:druid/druid.dart';
+
+// ---------------------------------------------------------------------------
+// Avatar Bloc
+// ---------------------------------------------------------------------------
+
+sealed class AvatarEvent {}
+
+class FetchAvatar extends AvatarEvent {}
+
+sealed class AvatarState {}
+
+class AvatarIdle extends AvatarState {
+  final String url;
+  AvatarIdle(this.url);
+}
+
+class AvatarLoading extends AvatarState {}
+
+class AvatarLoaded extends AvatarState {
+  final String url;
+  AvatarLoaded(this.url);
+}
+
+class AvatarError extends AvatarState {
+  final String message;
+  AvatarError(this.message);
+}
+
+class AvatarBloc extends Bloc<AvatarEvent, AvatarState> {
+  AvatarBloc() : super(AvatarIdle('avatar.jpg')) {
+    on<FetchAvatar>(_onFetch);
+  }
+
+  Future<void> _onFetch(
+      FetchAvatar event, void Function(AvatarState) emit) async {
+    emit(AvatarLoading());
+    try {
+      // final response = await web.window.fetch(
+      //   'https://service.image.ru'.toJS,
+      // ).toDart;
+      // final text = await response.text().toDart;
+      // final json = jsonDecode(text.toDart) as Map<String, dynamic>;
+      final json = {
+        "avatar_url": "https://i.ytimg.com/vi/q5G7h-Ks3to/maxresdefault.jpg"
+      };
+      emit(AvatarLoaded(json['avatar_url'] as String));
+    } catch (e) {
+      emit(AvatarError('Не удалось загрузить'));
+    }
+  }
+}
 
 const _css = '''
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -240,11 +294,35 @@ h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.4rem; }
   display: block;
   margin: 30px auto 0;
   box-shadow: 0 0 60px var(--accent-glow);
+  transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.avatar-click-area {
+  cursor: pointer;
+  display: block;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.avatar-click-area:hover .avatar-circle {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 0 80px var(--accent-glow);
+}
+
+.avatar-loading { opacity: 0.5; }
+.avatar-error   { filter: grayscale(1); opacity: 0.6; }
+
+.avatar-hint {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
 }
 
 .tech-badges {
   position: absolute;
   inset: 0;
+  pointer-events: none;
 }
 
 .tech-badge {
@@ -512,14 +590,6 @@ Widget _navLink(String href, String label) => A(
       child: Text(label),
     );
 
-Widget _statItem(String value, String label) => Div(
-      className: 'stat-item',
-      children: [
-        Div(className: 'stat-value', children: [Text(value)]),
-        Div(className: 'stat-label', children: [Text(label)]),
-      ],
-    );
-
 Widget _techChip(String emoji, String name) => Div(
       className: 'tech-chip',
       children: [
@@ -585,8 +655,7 @@ Widget _priceCard({
     Div(
       className: popular ? 'price-card popular' : 'price-card',
       children: [
-        if (popular)
-          Div(className: 'badge', children: [Text('Популярный')]),
+        if (popular) Div(className: 'badge', children: [Text('Популярный')]),
         H3(child: Text(title)),
         Div(
           className: 'price-amount',
@@ -625,6 +694,163 @@ Widget _priceCard({
 class LandingPage extends StatelessWidget {
   const LandingPage();
 
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: () => AvatarBloc(),
+      child: _LandingContent(),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Hero section — uses AvatarBloc via BlocProvider + BlocBuilder
+// ---------------------------------------------------------------------------
+
+class _HeroSection extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final bloc = BlocProvider.of<AvatarBloc>(context);
+    return BlocBuilder<AvatarBloc, AvatarState>(
+      bloc: bloc,
+      builder: (ctx, state) {
+        final String avatarSrc;
+        final String avatarClass;
+        final String hint;
+
+        if (state is AvatarLoading) {
+          avatarSrc = 'avatar.jpg';
+          avatarClass = 'avatar-circle avatar-loading';
+          hint = 'Загрузка…';
+        } else if (state is AvatarLoaded) {
+          avatarSrc = state.url;
+          avatarClass = 'avatar-circle';
+          hint = 'Кликни ещё раз';
+        } else if (state is AvatarError) {
+          avatarSrc = 'avatar.jpg';
+          avatarClass = 'avatar-circle avatar-error';
+          hint = state.message;
+        } else {
+          // AvatarIdle
+          avatarSrc = (state as AvatarIdle).url;
+          avatarClass = 'avatar-circle';
+          hint = 'Кликни для обновления';
+        }
+
+        return Section(
+          className: 'hero',
+          children: [
+            Div(
+              className: 'hero-inner',
+              children: [
+                Div(
+                  className: 'hero-content',
+                  children: [
+                    Div(
+                      className: 'hero-badge',
+                      children: [
+                        Span(child: Text('🚀')),
+                        Text(' Flutter Developer & Mentor'),
+                      ],
+                    ),
+                    H1(
+                      children: [
+                        Text('Ментор по '),
+                        Span(className: 'accent', child: Text('Flutter')),
+                        Text(' и мобильной разработке'),
+                      ],
+                    ),
+                    P(
+                      className: 'hero-desc',
+                      child: Text(
+                        'Помогаю разработчикам освоить Flutter с нуля или '
+                        'перейти на следующий уровень. Практические занятия, '
+                        'code review и персональный подход.',
+                      ),
+                    ),
+                    Div(
+                      className: 'hero-stats',
+                      children: [
+                        _heroStat('0+', 'Учеников'),
+                        _heroStat('0+', 'Лет опыта'),
+                        _heroStat('0+', 'Проектов'),
+                      ],
+                    ),
+                    Div(
+                      className: 'hero-actions',
+                      children: [
+                        A(
+                          href: 'https://t.me/geexman',
+                          target: '_blank',
+                          className: 'btn-primary',
+                          child: Text('Записаться на занятие'),
+                        ),
+                        A(
+                          href: '#services',
+                          className: 'btn-ghost',
+                          child: Text('Узнать об услугах'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                Div(
+                  className: 'hero-visual',
+                  children: [
+                    Div(
+                      className: 'avatar-wrapper',
+                      children: [
+                        Div(
+                          className: 'avatar-click-area',
+                          onClick: (_) => bloc.add(FetchAvatar()),
+                          children: [
+                            Img(
+                              src: avatarSrc,
+                              alt: 'Дмитрий Шаныгин',
+                              className: avatarClass,
+                            ),
+                          ],
+                        ),
+                        Div(
+                          className: 'avatar-hint',
+                          children: [Text(hint)],
+                        ),
+                        Div(
+                          className: 'tech-badges',
+                          children: [
+                            Div(
+                                className: 'tech-badge flutter',
+                                children: [Text('Flutter')]),
+                            Div(
+                                className: 'tech-badge dart',
+                                children: [Text('Dart')]),
+                            Div(
+                                className: 'tech-badge firebase',
+                                children: [Text('Firebase')]),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _heroStat(String value, String label) => Div(
+        className: 'stat-item',
+        children: [
+          Div(className: 'stat-value', children: [Text(value)]),
+          Div(className: 'stat-label', children: [Text(label)]),
+        ],
+      );
+}
+
+class _LandingContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Div(
@@ -672,93 +898,7 @@ class LandingPage extends StatelessWidget {
         ],
       );
 
-  Widget _buildHero() => Section(
-        className: 'hero',
-        children: [
-          Div(
-            className: 'hero-inner',
-            children: [
-              Div(
-                className: 'hero-content',
-                children: [
-                  Div(
-                    className: 'hero-badge',
-                    children: [
-                      Span(child: Text('🚀')),
-                      Text(' Flutter Developer & Mentor'),
-                    ],
-                  ),
-                  H1(
-                    children: [
-                      Text('Ментор по '),
-                      Span(
-                        className: 'accent',
-                        child: Text('Flutter'),
-                      ),
-                      Text(' и мобильной разработке'),
-                    ],
-                  ),
-                  P(
-                    className: 'hero-desc',
-                    child: Text(
-                      'Помогаю разработчикам освоить Flutter с нуля или '
-                      'перейти на следующий уровень. Практические занятия, '
-                      'code review и персональный подход.',
-                    ),
-                  ),
-                  Div(
-                    className: 'hero-stats',
-                    children: [
-                      _statItem('0+', 'Учеников'),
-                      _statItem('0+', 'Лет опыта'),
-                      _statItem('0+', 'Проектов'),
-                    ],
-                  ),
-                  Div(
-                    className: 'hero-actions',
-                    children: [
-                      A(
-                        href: 'https://t.me/geexman',
-                        target: '_blank',
-                        className: 'btn-primary',
-                        child: Text('Записаться на занятие'),
-                      ),
-                      A(
-                        href: '#services',
-                        className: 'btn-ghost',
-                        child: Text('Узнать об услугах'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              Div(
-                className: 'hero-visual',
-                children: [
-                  Div(
-                    className: 'avatar-wrapper',
-                    children: [
-                      Img(
-                        src: 'avatar.jpg',
-                        alt: 'Дмитрий Шаныгин',
-                        className: 'avatar-circle',
-                      ),
-                      Div(
-                        className: 'tech-badges',
-                        children: [
-                          Div(className: 'tech-badge flutter', children: [Text('Flutter')]),
-                          Div(className: 'tech-badge dart', children: [Text('Dart')]),
-                          Div(className: 'tech-badge firebase', children: [Text('Firebase')]),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      );
+  Widget _buildHero() => _HeroSection();
 
   Widget _buildAbout() => Section(
         id: 'about',
@@ -789,7 +929,8 @@ class LandingPage extends StatelessWidget {
                   _featureCard(
                     emoji: '💼',
                     title: 'Практический опыт',
-                    desc: 'Работаю над реальными коммерческими Flutter-приложениями. '
+                    desc:
+                        'Работаю над реальными коммерческими Flutter-приложениями. '
                         'Знаю, что нужно индустрии.',
                   ),
                   _featureCard(

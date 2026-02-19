@@ -74,3 +74,7 @@ export 'src/app.dart' show runApp;
 
 // Utilities
 export 'src/utils/stylesheet.dart' show injectStyleSheet;
+
+// Bloc state management
+export 'src/bloc/bloc.dart' show Bloc;
+export 'src/bloc/bloc_provider.dart' show BlocProvider, BlocBuilder;
