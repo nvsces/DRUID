@@ -2,12 +2,17 @@
 library druid.widgets.context;
 
 import '../vdom/vnode.dart';
+import '../theme/theme_data.dart';
 import 'widget.dart';
 
 /// Passed to [Widget.build] to give widgets access to tree-level services.
 class BuildContext {
-  const BuildContext({this.buildWidget, Map<Type, Object>? providers})
-      : _providers = providers ?? const {};
+  const BuildContext({
+    this.buildWidget,
+    Map<Type, Object>? providers,
+    ThemeData? theme,
+  })  : _providers = providers ?? const {},
+        _theme = theme;
 
   /// Injected by [_AppRunner] to route composite widgets through the runner.
   /// Html leaf widgets use this to build their children correctly.
@@ -15,6 +20,12 @@ class BuildContext {
 
   /// Inherited provider map — populated by [BlocProvider] and similar widgets.
   final Map<Type, Object> _providers;
+
+  /// The nearest [ThemeData] provided by a [Theme] widget or [runApp].
+  final ThemeData? _theme;
+
+  /// Returns the current theme, or null if none has been provided.
+  ThemeData? get theme => _theme;
 
   /// Build [widget] using the runner's build pipeline if available,
   /// otherwise fall back to [Widget.toVNode].
@@ -32,6 +43,14 @@ class BuildContext {
   BuildContext withProviders(Map<Type, Object> extra) => BuildContext(
         buildWidget: buildWidget,
         providers: {..._providers, ...extra},
+        theme: _theme,
+      );
+
+  /// Return a new [BuildContext] with the given [theme] applied.
+  BuildContext withTheme(ThemeData theme) => BuildContext(
+        buildWidget: buildWidget,
+        providers: _providers,
+        theme: theme,
       );
 }
 
