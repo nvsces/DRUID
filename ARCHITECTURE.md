@@ -111,6 +111,105 @@ Effect читает сигналы во время билда — при их и
 
 ---
 
+## Цикл обновления UI
+
+### Шаг 1 — Первый рендер: автоматическая подписка на сигналы
+
+`runApp()` создаёт один `Effect`, оборачивающий `_render()`. Effect сразу выполняется синхронно и добавляет себя в `_trackingStack`. Любой сигнал, чьё `.value` читается во время рендера, видит это и регистрирует зависимость:
+
+```dart
+// signal.dart
+T get value {
+  if (_trackingStack.isNotEmpty) {
+    _trackingStack.last._track(this); // ← автоматическая подписка
+  }
+  return _value;
+}
+```
+
+После первого рендера `_renderEffect` знает обо всех сигналах, которые участвовали в построении дерева.
+
+### Шаг 2 — Изменение сигнала
+
+```dart
+count.value = 1;
+```
+
+Signal оповещает всех подписчиков. `Effect._run()` **не запускает рендер немедленно** — он ставит себя в очередь:
+
+```dart
+// signal.dart
+void _run() {
+  _pendingEffects.add(this);
+  _scheduleFlush(); // scheduleMicrotask(_flush)
+}
+```
+
+Батчинг: если за один синхронный тик изменить несколько сигналов — рендер произойдёт один раз.
+
+### Шаг 3 — Microtask: переподписка и новый VNode
+
+```dart
+// signal.dart
+void _flush() {
+  final batch = List<Effect>.from(_pendingEffects);
+  _pendingEffects.clear();
+  for (final e in batch) {
+    e._execute(); // → _render()
+  }
+}
+```
+
+`_execute()` сначала сбрасывает все старые зависимости (`_clearUpstreams`), затем заново запускает `_render()` — тем самым **переподписывается** на актуальный набор сигналов. Это важно: если условный рендер (`if/else`) поменял набор читаемых сигналов, граф зависимостей обновится корректно.
+
+### Шаг 4 — Diff + Patch DOM
+
+```dart
+// app.dart
+final patches = diff(_currentVNode, newVNode);
+if (patches.isNotEmpty) {
+  _currentDom = patcher.applyPatches(_currentDom!, patches, newVNode);
+}
+```
+
+`diff()` сравнивает старое и новое VNode-дерево за O(n) и возвращает минимальный список патчей. `applyPatches` применяет только реально изменившиеся узлы.
+
+### Полная схема
+
+```
+State.initState()
+  count = signal(0) ──────────────────────────────────┐
+                                                       │
+runApp()                                               │
+  └─ effect(_render)  ← синхронный первый запуск       │
+       └─ _buildWidget(root)                           │
+            └─ state.build(ctx)                        │
+                 └─ читает count.value ────────────────┘──► регистрирует зависимость
+                                                       │
+                                               count.value = 1
+                                                       │
+                                         Signal уведомляет Effect
+                                                       │
+                                           scheduleMicrotask
+                                                       │
+                                        _flush() → _render()
+                                                       │
+                                    diff(oldVNode, newVNode) → Patches
+                                                       │
+                                       applyPatches() → DOM
+```
+
+### Ключевые свойства механизма
+
+| Свойство | Реализация |
+|---|---|
+| Автоматическая подписка | `_trackingStack` при чтении `.value` |
+| Батчинг изменений | `scheduleMicrotask` — один рендер на тик |
+| Минимальные обновления DOM | `diff` возвращает только изменения |
+| Динамическая переподписка | `_clearUpstreams()` перед каждым рендером |
+
+---
+
 ## Итоговый поток данных
 
 ```

@@ -13,6 +13,8 @@ import 'vdom/differ.dart';
 import 'vdom/patcher.dart' as patcher;
 import 'widgets/widget.dart';
 import 'widgets/context.dart';
+import 'theme/theme_data.dart';
+import 'theme/theme.dart';
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -24,16 +26,27 @@ import 'widgets/context.dart';
 /// changes, the widget tree is re-built, diffed against the previous VNode
 /// tree, and minimal patches are applied to the real DOM.
 ///
+/// Pass [theme] to apply a [ThemeData] globally — accessible anywhere via
+/// `Theme.of(context)`:
 /// ```dart
-/// void main() => runApp(Counter(), selector: '#app');
+/// void main() => runApp(
+///   MyApp(),
+///   theme: ThemeData(
+///     fontFamily: 'Jost',
+///     colorScheme: ColorScheme.light(primary: Color(0xFF3e5efe)),
+///   ),
+/// );
 /// ```
-void runApp(Widget root, {String selector = '#app'}) {
+void runApp(Widget root, {String selector = '#app', ThemeData? theme}) {
   final container = web.document.querySelector(selector);
   if (container == null) {
     throw StateError('druid: no element found for selector "$selector"');
   }
 
-  _AppRunner(root, container).mount();
+  final Widget effectiveRoot =
+      theme != null ? Theme(data: theme, child: root) : root;
+
+  _AppRunner(effectiveRoot, container).mount();
 }
 
 // ---------------------------------------------------------------------------

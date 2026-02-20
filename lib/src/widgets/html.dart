@@ -6,16 +6,28 @@ library druid.widgets.html;
 
 import 'widget.dart';
 import 'context.dart';
+import 'style.dart';
+import 'css_style.dart';
 import '../vdom/vnode.dart'; // exports EventHandler
 
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 
+/// Resolves a style value to `Map<String, String>?`.
+///
+/// Accepts [CssStyle], `Map<String, String>`, or `null`.
+Map<String, String>? _resolveStyle(Object? style) {
+  if (style == null) return null;
+  if (style is CssStyle) return style.toMap();
+  if (style is Map<String, String>) return style;
+  return null;
+}
+
 /// Builds a props map from named parameters, omitting null values.
 Map<String, Object> _props({
   String? className,
-  Map<String, String>? style,
+  Object? style,
   bool? disabled,
   Map<String, Object>? extra,
   EventHandler? onClick,
@@ -31,7 +43,8 @@ Map<String, Object> _props({
 }) {
   final map = <String, Object>{};
   if (className != null) map['className'] = className;
-  if (style != null) map['style'] = style;
+  final resolvedStyle = _resolveStyle(style);
+  if (resolvedStyle != null) map['style'] = resolvedStyle;
   if (disabled != null) map['disabled'] = disabled;
   if (onClick != null) map['onClick'] = onClick;
   if (onInput != null) map['onInput'] = onInput;
@@ -68,7 +81,7 @@ class Div extends Widget {
 
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
   final EventHandler? onClick;
   final EventHandler? onMouseOver;
   final EventHandler? onMouseOut;
@@ -102,7 +115,7 @@ class Span extends Widget {
   final List<Widget> children;
   final Widget? child;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
   final EventHandler? onClick;
 
   @override
@@ -129,7 +142,7 @@ class Section extends Widget {
 
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
   final String? id;
 
   @override
@@ -156,7 +169,7 @@ class Article extends Widget {
 
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
 
   @override
   VNode toVNode(BuildContext context) => VElement(
@@ -178,7 +191,7 @@ class Header extends Widget {
 
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
 
   @override
   VNode toVNode(BuildContext context) => VElement(
@@ -200,7 +213,7 @@ class Footer extends Widget {
 
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
 
   @override
   VNode toVNode(BuildContext context) => VElement(
@@ -222,7 +235,7 @@ class Main extends Widget {
 
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
 
   @override
   VNode toVNode(BuildContext context) => VElement(
@@ -244,7 +257,7 @@ class Nav extends Widget {
 
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
 
   @override
   VNode toVNode(BuildContext context) => VElement(
@@ -265,7 +278,7 @@ class H1 extends Widget {
   final Widget? child;
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
 
   @override
   VNode toVNode(BuildContext context) {
@@ -285,7 +298,7 @@ class H2 extends Widget {
   final Widget? child;
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
 
   @override
   VNode toVNode(BuildContext context) {
@@ -300,7 +313,7 @@ class H3 extends Widget {
   final Widget? child;
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
 
   @override
   VNode toVNode(BuildContext context) {
@@ -315,7 +328,7 @@ class H4 extends Widget {
   final Widget? child;
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
 
   @override
   VNode toVNode(BuildContext context) {
@@ -334,7 +347,7 @@ class P extends Widget {
   final Widget? child;
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
 
   @override
   VNode toVNode(BuildContext context) {
@@ -458,7 +471,7 @@ class Button extends Widget {
   final Widget? child;
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
   final bool? disabled;
   final String? type;
   final EventHandler? onClick;
@@ -511,7 +524,7 @@ class Input extends Widget {
   final bool? disabled;
   final bool? checked;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
   final EventHandler? onInput;
   final EventHandler? onChange;
   final EventHandler? onFocus;
@@ -561,7 +574,7 @@ class Textarea extends Widget {
   final int? cols;
   final bool? disabled;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
   final EventHandler? onInput;
   final EventHandler? onChange;
 
@@ -595,7 +608,7 @@ class Select extends Widget {
 
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
   final bool? disabled;
   final EventHandler? onChange;
 
@@ -658,7 +671,7 @@ class Form extends Widget {
 
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
   final EventHandler? onSubmit;
 
   @override
@@ -683,7 +696,7 @@ class Label extends Widget {
   final Widget child;
   final String? htmlFor;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
 
   @override
   VNode toVNode(BuildContext context) {
@@ -707,7 +720,7 @@ class Ul extends Widget {
   const Ul({this.children = const [], this.className, this.style, super.key});
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
 
   @override
   VNode toVNode(BuildContext context) => VElement(
@@ -723,7 +736,7 @@ class Ol extends Widget {
   const Ol({this.children = const [], this.className, this.style, super.key});
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
 
   @override
   VNode toVNode(BuildContext context) => VElement(
@@ -740,7 +753,7 @@ class Li extends Widget {
   final Widget? child;
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
   final EventHandler? onClick;
 
   @override
@@ -775,7 +788,7 @@ class A extends Widget {
   final String? href;
   final String? target;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
   final EventHandler? onClick;
 
   @override
@@ -807,7 +820,7 @@ class Img extends Widget {
   final String src;
   final String alt;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
   final int? width;
   final int? height;
 
@@ -831,7 +844,7 @@ class Table extends Widget {
   const Table({this.children = const [], this.className, this.style, super.key});
   final List<Widget> children;
   final String? className;
-  final Map<String, String>? style;
+  final Object? style;
 
   @override
   VNode toVNode(BuildContext context) => VElement(
@@ -888,5 +901,160 @@ class Td extends Widget {
   VNode toVNode(BuildContext context) {
     final kids = child != null ? [child!] : children;
     return VElement(tag: 'td', key: key, props: _props(className: className), children: _childVNodes(kids, context));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// GestureDetector — декларативный обработчик жестов/событий
+// ---------------------------------------------------------------------------
+
+/// Виджет-обёртка, которая перехватывает пользовательские жесты и события
+/// мыши/клавиатуры. Рендерит `<div>` с `display:contents`, чтобы не влиять
+/// на лейаут дочернего элемента.
+///
+/// ```dart
+/// GestureDetector(
+///   onTap: (_) => print('tapped'),
+///   onDoubleTap: (_) => print('double-tapped'),
+///   child: Img(src: 'photo.jpg'),
+/// )
+/// ```
+class GestureDetector extends Widget {
+  const GestureDetector({
+    required this.child,
+    this.onTap,
+    this.onDoubleTap,
+    this.onLongPress,
+    this.onMouseEnter,
+    this.onMouseLeave,
+    this.onMouseDown,
+    this.onMouseUp,
+    this.onMouseMove,
+    this.onKeyDown,
+    this.onKeyUp,
+    this.className,
+    this.style,
+    super.key,
+  });
+
+  final Widget child;
+
+  /// Срабатывает при одиночном клике / тапе (click).
+  final EventHandler? onTap;
+
+  /// Срабатывает при двойном клике (dblclick).
+  final EventHandler? onDoubleTap;
+
+  /// Срабатывает при долгом нажатии (contextmenu — правая кнопка / долгий тап).
+  final EventHandler? onLongPress;
+
+  final EventHandler? onMouseEnter;
+  final EventHandler? onMouseLeave;
+  final EventHandler? onMouseDown;
+  final EventHandler? onMouseUp;
+  final EventHandler? onMouseMove;
+  final EventHandler? onKeyDown;
+  final EventHandler? onKeyUp;
+
+  final String? className;
+  final Object? style;
+
+  @override
+  VNode toVNode(BuildContext context) {
+    final resolved = _resolveStyle(style);
+    final styleMap = <String, String>{'display': 'contents', ...?resolved};
+    final p = _props(
+      className: className,
+      style: styleMap,
+      onClick: onTap,
+      onMouseOver: onMouseEnter,
+      onMouseOut: onMouseLeave,
+      onKeyDown: onKeyDown,
+      onKeyUp: onKeyUp,
+    );
+    if (onDoubleTap != null) p['onDblClick'] = onDoubleTap!;
+    if (onLongPress != null) p['onContextMenu'] = onLongPress!;
+    if (onMouseDown != null) p['onMouseDown'] = onMouseDown!;
+    if (onMouseUp != null) p['onMouseUp'] = onMouseUp!;
+    if (onMouseMove != null) p['onMouseMove'] = onMouseMove!;
+    return VElement(
+      tag: 'div',
+      key: key,
+      props: p,
+      children: [child.toVNode(context)],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Container — Flutter-like box with decoration, padding, margin
+// ---------------------------------------------------------------------------
+
+/// A convenience widget that combines a `<div>` with [BoxDecoration],
+/// [EdgeInsets] padding and margin, and optional sizing — similar to
+/// Flutter's `Container`.
+///
+/// ```dart
+/// Container(
+///   padding: EdgeInsets.all(16),
+///   margin: EdgeInsets.symmetric(vertical: 8),
+///   decoration: BoxDecoration(
+///     color: '#111118',
+///     borderRadius: BorderRadius.circular(12),
+///     border: Border.all(color: '#1e1e2e'),
+///   ),
+///   child: Text('Hello'),
+/// )
+/// ```
+class Container extends Widget {
+  const Container({
+    this.child,
+    this.children = const [],
+    this.decoration,
+    this.padding,
+    this.margin,
+    this.width,
+    this.height,
+    this.className,
+    this.style,
+    this.onClick,
+    super.key,
+  });
+
+  final Widget? child;
+  final List<Widget> children;
+  final BoxDecoration? decoration;
+  final EdgeInsets? padding;
+  final EdgeInsets? margin;
+  final double? width;
+  final double? height;
+  final String? className;
+  final Object? style;
+  final EventHandler? onClick;
+
+  @override
+  VNode toVNode(BuildContext context) {
+    final styleMap = <String, String>{};
+    if (decoration != null) styleMap.addAll(decoration!.toStyleMap());
+    if (padding != null) styleMap['padding'] = padding!.toCss();
+    if (margin != null) styleMap['margin'] = margin!.toCss();
+    if (width != null) styleMap['width'] = '${width}px';
+    if (height != null) styleMap['height'] = '${height}px';
+    final resolved = _resolveStyle(style);
+    if (resolved != null) styleMap.addAll(resolved);
+
+    final props = _props(
+      className: className,
+      style: styleMap.isEmpty ? null : styleMap,
+      onClick: onClick,
+    );
+
+    final kids = child != null ? [child!] : children;
+    return VElement(
+      tag: 'div',
+      key: key,
+      props: props,
+      children: _childVNodes(kids, context),
+    );
   }
 }

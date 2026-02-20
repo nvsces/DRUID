@@ -67,14 +67,85 @@ export 'src/widgets/html.dart'
         // Media / links
         A, Img,
         // Table
-        Table, Thead, Tbody, Tr, Th, Td;
+        Table, Thead, Tbody, Tr, Th, Td,
+        // Flutter-like container
+        Container,
+        // Gesture / event wrapper
+        GestureDetector;
+
+// Style system
+export 'src/widgets/style.dart'
+    show
+        EdgeInsets,
+        BorderRadius,
+        Border,
+        BoxShadow,
+        BoxDecoration,
+        TextStyle,
+        FontWeight,
+        FontStyle,
+        TextAlign,
+        TextOverflow,
+        StyledText;
+
+// CSS typed style
+export 'src/widgets/css_units.dart'
+    show CssValue, Px, Percent, Rem, CssEm, Vw, Vh, Auto, CssRaw;
+export 'src/widgets/css_style.dart'
+    show
+        CssStyle,
+        Display,
+        Position,
+        FlexDirection,
+        FlexWrap,
+        AlignItems,
+        JustifyContent,
+        AlignSelf,
+        Overflow,
+        Cursor,
+        BoxSizing,
+        Visibility,
+        WhiteSpace,
+        TextTransform,
+        ObjectFit,
+        PointerEvents;
 
 // App entry point
 export 'src/app.dart' show runApp;
 
 // Utilities
-export 'src/utils/stylesheet.dart' show injectStyleSheet;
+export 'src/utils/stylesheet.dart'
+    show
+        injectStyleSheet,
+        CssRule,
+        StyleSheet,
+        StyleRule,
+        Keyframes,
+        MediaQuery;
+
+// Animation system
+export 'src/animation/animation.dart' show HasAnimationValue;
+export 'src/animation/curves.dart' show Curve, CurvedAnimation, Curves;
+export 'src/animation/ticker.dart' show Ticker, TickCallback, TickerProvider, SingleTickerProviderMixin, MultiTickerProvider;
+export 'src/animation/animation_controller.dart' show AnimationController, AnimationStatus;
+export 'src/animation/tween.dart' show Tween, TweenAnimation, IntTween, DoubleTween;
+export 'src/animation/animated_builder.dart' show AnimatedBuilder;
+
+// Color
+export 'src/core/color.dart' show Color;
+
+// Theme
+export 'src/theme/theme_data.dart' show ThemeData, ColorScheme, TextTheme;
+export 'src/theme/theme.dart' show Theme;
 
 // Bloc state management
 export 'src/bloc/bloc.dart' show Bloc;
 export 'src/bloc/bloc_provider.dart' show BlocProvider, BlocBuilder;
+
+// Navigation / Routing
+export 'src/navigation/route.dart'
+    show RouteDefinition, RouteMatch, RouteGuard, RouteBuilder, matchRoute, parseQueryParams, extractPath;
+export 'src/navigation/router_controller.dart' show RouterController;
+export 'src/navigation/router_provider.dart' show RouterProvider;
+export 'src/navigation/router.dart' show RouterOutlet, NestedRouterOutlet;
+export 'src/navigation/link.dart' show Link;
